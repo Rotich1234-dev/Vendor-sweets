@@ -1,8 +1,9 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import MetaData
-from sqlalchemy.orm import validates
+from sqlalchemy import MetaData, ForeignKey
+from sqlalchemy.orm import validates, relationship
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy_serializer import SerializerMixin
+from faker import Faker
 
 metadata = MetaData(naming_convention={
     "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
@@ -18,8 +19,11 @@ class Sweet(db.Model, SerializerMixin):
     name = db.Column(db.String)
 
     # Add relationship
-    vendors = db.relationship('VendorSweet', back_populates='sweet')
+    vendors = relationship("VendorSweet", back_populates="sweet")
+    vendor_proxy = association_proxy("vendors", "vendor")
     # Add serialization
+
+    serialize_rules = ('-vendors.sweet',)
     
     def __repr__(self):
         return f'<Sweet {self.id}>'
@@ -32,8 +36,10 @@ class Vendor(db.Model, SerializerMixin):
     name = db.Column(db.String)
 
     # Add relationship
-    sweets = db.relationship('VendorSweet', back_populates='vendor')
+    sweets = relationship("VendorSweet", back_populates="vendor")
+    sweet_proxy = association_proxy("sweets", "sweet")
     # Add serialization
+    serialize_rules = ('-sweets.vendor',)
     
     def __repr__(self):
         return f'<Vendor {self.id}>'
@@ -46,14 +52,22 @@ class VendorSweet(db.Model, SerializerMixin):
     price = db.Column(db.Integer, nullable=False)
 
     # Add relationships
-    
-    # Add serialization
-    vendor_id = db.Column(db.Integer, db.ForeignKey('vendors.id'))
-    vendor = db.relationship('Vendor', back_populates='sweets')
+    vendor_id = db.Column(db.Integer, ForeignKey('vendors.id'))
+    sweet_id = db.Column(db.Integer, ForeignKey('sweets.id'))
 
-    sweet_id = db.Column(db.Integer, db.ForeignKey('sweets.id'))
-    sweet = db.relationship('Sweet', back_populates='vendors')
+    vendor = relationship("Vendor", back_populates="sweets")
+    sweet = relationship("Sweet", back_populates="vendors")
+
+   
+    # Add serialization
+    serialize_rules = ('-vendor.sweets', '-sweet.vendors')
     # Add validation
+    @validates('price')
+    @validates('price')
+    def validate_price(self, key, price):
+        if price is None or price < 0:
+            raise ValueError("Price must be non-negative.")
+        return price
     
     def __repr__(self):
         return f'<VendorSweet {self.id}>'
