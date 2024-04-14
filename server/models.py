@@ -18,7 +18,7 @@ class Sweet(db.Model, SerializerMixin):
     name = db.Column(db.String)
 
     # Add relationship
-    
+    vendors = db.relationship('VendorSweet', back_populates='sweet')
     # Add serialization
     
     def __repr__(self):
@@ -32,7 +32,7 @@ class Vendor(db.Model, SerializerMixin):
     name = db.Column(db.String)
 
     # Add relationship
-    
+    sweets = db.relationship('VendorSweet', back_populates='vendor')
     # Add serialization
     
     def __repr__(self):
@@ -48,7 +48,11 @@ class VendorSweet(db.Model, SerializerMixin):
     # Add relationships
     
     # Add serialization
-    
+    vendor_id = db.Column(db.Integer, db.ForeignKey('vendors.id'))
+    vendor = db.relationship('Vendor', back_populates='sweets')
+
+    sweet_id = db.Column(db.Integer, db.ForeignKey('sweets.id'))
+    sweet = db.relationship('Sweet', back_populates='vendors')
     # Add validation
     
     def __repr__(self):
