@@ -58,16 +58,16 @@ class VendorSweet(db.Model, SerializerMixin):
     vendor = relationship("Vendor", back_populates="sweets")
     sweet = relationship("Sweet", back_populates="vendors")
 
-   
     # Add serialization
     serialize_rules = ('-vendor.sweets', '-sweet.vendors')
     # Add validation
-    @validates('price')
     @validates('price')
     def validate_price(self, key, price):
         if price is None or price < 0:
             raise ValueError("Price must be non-negative.")
         return price
-    
+
     def __repr__(self):
         return f'<VendorSweet {self.id}>'
+    
+   
